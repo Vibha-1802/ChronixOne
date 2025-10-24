@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">ChronixOne</string>
+        <string name="enter_date_label">Enter Date (DD/MM/YYYY):</string>
+        <string name="hint_date">e.g. 28/02/2024</string>
+        <string name="button_text">Get Next Date</string>
+        <string name="result_label">Next Date:</string>
 </resources>
