@@ -1,16 +1,38 @@
 package com.example.chronixone;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.Spanned;
+import android.text.TextWatcher;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
 
     EditText editTextDate;
     Button buttonCalculate;
     TextView textViewResult;
+
+    Spinner spinnerDay, spinnerMonth, spinnerYear;
+
+    private static final int MIN_YEAR = 1872;
+    private static final int MAX_YEAR = 2025;
+
+    // flags to avoid feedback loops
+    private boolean updatingFromSpinners = false;
+    private boolean updatingFromText = false;
+
+    private static final Pattern FULL_DATE = Pattern.compile("^\\d{1,2}/\\d{1,2}/\\d{4}$");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,6 +43,26 @@ public class MainActivity extends AppCompatActivity {
         buttonCalculate = findViewById(R.id.buttonCalculate);
         textViewResult = findViewById(R.id.textViewResult);
 
+        spinnerDay = findViewById(R.id.spinnerDay);
+        spinnerMonth = findViewById(R.id.spinnerMonth);
+        spinnerYear = findViewById(R.id.spinnerYear);
+
+        // Allow only digits and '/' in the EditText, but DO NOT auto-format.
+        editTextDate.setFilters(new InputFilter[]{
+                (source, start, end, dest, dstart, dend) -> {
+                    for (int i = start; i < end; i++) {
+                        char c = source.charAt(i);
+                        if (!(Character.isDigit(c) || c == '/')) {
+                            return "";
+                        }
+                    }
+                    return null; // keep input
+                }
+        });
+
+        setupSpinners();
+        wireSyncBetweenTextAndSpinners();
+
         buttonCalculate.setOnClickListener(v -> {
             String input = editTextDate.getText().toString().trim();
 
@@ -30,8 +72,8 @@ public class MainActivity extends AppCompatActivity {
                 int month = Integer.parseInt(parts[1]);
                 int year = Integer.parseInt(parts[2]);
 
-                if (year < 1872 || year > 2025) {
-                    textViewResult.setText("Year must be between 1872 and 2025");
+                if (year < MIN_YEAR || year > MAX_YEAR) {
+                    textViewResult.setText("Year must be between " + MIN_YEAR + " and " + MAX_YEAR);
                     return;
                 }
 
@@ -49,23 +91,140 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /* ---------- Spinners setup & sync ---------- */
+
+    private void setupSpinners() {
+        // Month: 1..12
+        List<Integer> months = new ArrayList<>();
+        for (int i = 1; i <= 12; i++) months.add(i);
+        spinnerMonth.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, months));
+
+        // Year: 1872..2025
+        List<Integer> years = new ArrayList<>();
+        for (int y = MIN_YEAR; y <= MAX_YEAR; y++) years.add(y);
+        spinnerYear.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, years));
+
+        // Day: depends on month/year; initialize to 1..31
+        updateDayAdapter(1, MIN_YEAR);
+
+        // Listeners
+        spinnerMonth.setOnItemSelectedListener(new SimpleItemSelectedListener(() -> {
+            int m = (int) spinnerMonth.getSelectedItem();
+            int y = (int) spinnerYear.getSelectedItem();
+            updateDayAdapter(m, y);
+            writeSpinnersToEditText(); // reflect in text (only after selection)
+        }));
+        spinnerYear.setOnItemSelectedListener(new SimpleItemSelectedListener(() -> {
+            int m = (int) spinnerMonth.getSelectedItem();
+            int y = (int) spinnerYear.getSelectedItem();
+            updateDayAdapter(m, y);
+            writeSpinnersToEditText();
+        }));
+        spinnerDay.setOnItemSelectedListener(new SimpleItemSelectedListener(this::writeSpinnersToEditText));
+
+        // Defaults
+        spinnerMonth.setSelection(0); // 1
+        spinnerYear.setSelection(0);  // 1872
+        spinnerDay.setSelection(0);   // 1
+        writeSpinnersToEditText();
+    }
+
+    private void updateDayAdapter(int month, int year) {
+        int max = daysInMonth(month, year);
+        int current = spinnerDay.getSelectedItem() == null ? 1 : (int) spinnerDay.getSelectedItem();
+
+        List<Integer> days = new ArrayList<>();
+        for (int d = 1; d <= max; d++) days.add(d);
+
+        spinnerDay.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, days));
+
+        int newSel = Math.min(current, max) - 1;
+        if (newSel < 0) newSel = 0;
+        spinnerDay.setSelection(newSel);
+    }
+
+    private void writeSpinnersToEditText() {
+        if (updatingFromText) return;
+        updatingFromSpinners = true;
+        int d = (int) spinnerDay.getSelectedItem();
+        int m = (int) spinnerMonth.getSelectedItem();
+        int y = (int) spinnerYear.getSelectedItem();
+        // Just set once per selection; don't constantly rewrite while typing.
+        String newText = String.format("%02d/%02d/%04d", d, m, y);
+        editTextDate.setText(newText);
+        editTextDate.setSelection(newText.length()); // keep cursor at end
+        updatingFromSpinners = false;
+    }
+
+    private void wireSyncBetweenTextAndSpinners() {
+        editTextDate.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) {
+                if (updatingFromSpinners) return;
+
+                String input = s.toString().trim();
+                // Only parse when it fully matches D{1,2}/M{1,2}/Y{4}
+                if (!FULL_DATE.matcher(input).matches()) {
+                    // Let the user freely edit/delete digits; do not push anything back.
+                    return;
+                }
+                try {
+                    String[] parts = input.split("/");
+                    int d = Integer.parseInt(parts[0]);
+                    int m = Integer.parseInt(parts[1]);
+                    int y = Integer.parseInt(parts[2]);
+
+                    if (y < MIN_YEAR || y > MAX_YEAR) return;
+                    int maxDay = daysInMonth(m, y);
+                    if (d < 1 || m < 1 || m > 12 || d > maxDay) return;
+
+                    updatingFromText = true;
+                    spinnerYear.setSelection(y - MIN_YEAR);
+                    spinnerMonth.setSelection(m - 1);
+                    updateDayAdapter(m, y);
+                    spinnerDay.setSelection(d - 1);
+                } catch (Exception ignored) {
+                } finally {
+                    updatingFromText = false;
+                }
+            }
+        });
+    }
+
+    /* ---------- Date utilities (unchanged logic) ---------- */
+
     private int[] getNextDate(int day, int month, int year) {
-        int[] daysInMonth = {31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30,
-                31, 31, 30, 31, 30, 31};
-
         day++;
-
-        if (day > daysInMonth[month - 1]) {
+        int dim = daysInMonth(month, year);
+        if (day > dim) {
             day = 1;
             month++;
         }
-
         if (month > 12) {
             month = 1;
             year++;
         }
-
         return new int[]{day, month, year};
+    }
+
+    private boolean isValidDate(int day, int month, int year) {
+        if (month < 1 || month > 12 || day < 1) return false;
+        return day <= daysInMonth(month, year);
+    }
+
+    private int daysInMonth(int month, int year) {
+        switch (month) {
+            case 2:  return isLeapYear(year) ? 29 : 28;
+            case 4:
+            case 6:
+            case 9:
+            case 11: return 30;
+            default: return 31;
+        }
     }
 
     private boolean isLeapYear(int year) {
@@ -74,10 +233,11 @@ public class MainActivity extends AppCompatActivity {
         return year % 4 == 0;
     }
 
-    private boolean isValidDate(int day, int month, int year) {
-        if (month < 1 || month > 12 || day < 1) return false;
-        int[] daysInMonth = {31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30,
-                31, 31, 30, 31, 30, 31};
-        return day <= daysInMonth[month - 1];
+    /* Small helper to avoid verbose listeners */
+    private static class SimpleItemSelectedListener implements android.widget.AdapterView.OnItemSelectedListener {
+        private final Runnable onSelect;
+        SimpleItemSelectedListener(Runnable onSelect) { this.onSelect = onSelect; }
+        @Override public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) { onSelect.run(); }
+        @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
     }
 }

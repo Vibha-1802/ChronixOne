@@ -4,4 +4,8 @@
         <string name="hint_date">e.g. 28/02/2024</string>
         <string name="button_text">Get Next Date</string>
         <string name="result_label">Next Date:</string>
+        <string name="day">Day</string>
+        <string name="month">Month</string>
+        <string name="year">Year</string>
+
 </resources>
