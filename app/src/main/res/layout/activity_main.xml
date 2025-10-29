@@ -45,10 +45,12 @@
         android:layout_marginTop="28dp"
         android:hint="@string/hint_date"
         android:inputType="text"
-    android:textSize="20sp"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/textView1" />
+        android:imeOptions="actionDone"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textView1" />
+
 
     <!-- NEW: dropdowns row placed between EditText and Button -->
     <LinearLayout

@@ -32,8 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean updatingFromSpinners = false;
     private boolean updatingFromText = false;
 
-    private static final Pattern FULL_DATE = Pattern.compile("^\\d{1,2}/\\d{1,2}/\\d{4}$");
-
+    private static final Pattern FULL_DATE = Pattern.compile("^\\d{2}/\\d{2}/\\d{4}$");
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -147,51 +146,50 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void writeSpinnersToEditText() {
-        if (updatingFromText) return;
+        // ⛔ Never rewrite while typing, that causes the "01" + cursor jump
+        if (editTextDate.hasFocus()) return;
+
         updatingFromSpinners = true;
         int d = (int) spinnerDay.getSelectedItem();
         int m = (int) spinnerMonth.getSelectedItem();
         int y = (int) spinnerYear.getSelectedItem();
-        // Just set once per selection; don't constantly rewrite while typing.
+
         String newText = String.format("%02d/%02d/%04d", d, m, y);
         editTextDate.setText(newText);
-        editTextDate.setSelection(newText.length()); // keep cursor at end
+        // leave cursor as-is (don’t force to end while not focused)
         updatingFromSpinners = false;
     }
+
 
     private void wireSyncBetweenTextAndSpinners() {
         editTextDate.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override public void afterTextChanged(Editable s) {
+            @Override
+            public void afterTextChanged(Editable s) {
                 if (updatingFromSpinners) return;
 
                 String input = s.toString().trim();
-                // Only parse when it fully matches D{1,2}/M{1,2}/Y{4}
-                if (!FULL_DATE.matcher(input).matches()) {
-                    // Let the user freely edit/delete digits; do not push anything back.
-                    return;
-                }
+                if (!FULL_DATE.matcher(input).matches()) return; // ← only when 10 chars
+
                 try {
                     String[] parts = input.split("/");
                     int d = Integer.parseInt(parts[0]);
                     int m = Integer.parseInt(parts[1]);
                     int y = Integer.parseInt(parts[2]);
-
                     if (y < MIN_YEAR || y > MAX_YEAR) return;
-                    int maxDay = daysInMonth(m, y);
-                    if (d < 1 || m < 1 || m > 12 || d > maxDay) return;
+                    if (d < 1 || m < 1 || m > 12 || d > daysInMonth(m, y)) return;
 
                     updatingFromText = true;
                     spinnerYear.setSelection(y - MIN_YEAR);
                     spinnerMonth.setSelection(m - 1);
                     updateDayAdapter(m, y);
-                    spinnerDay.setSelection(d - 1);
-                } catch (Exception ignored) {
+                    spinnerDay.setSelection(Math.max(0, d - 1));
                 } finally {
                     updatingFromText = false;
                 }
             }
+
         });
     }
 
