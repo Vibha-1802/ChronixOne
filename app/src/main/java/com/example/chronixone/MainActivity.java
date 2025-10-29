@@ -1,6 +1,9 @@
 package com.example.chronixone;
 
 import androidx.appcompat.app.AppCompatActivity;
+import java.util.Calendar;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 import android.os.Bundle;
 import android.text.Editable;
@@ -66,31 +69,58 @@ public class MainActivity extends AppCompatActivity {
             String input = editTextDate.getText().toString().trim();
 
             try {
+                // ensure full dd/MM/yyyy before parsing (prevents partials)
+                if (!FULL_DATE.matcher(input).matches()) {
+                    textViewResult.setText("Invalid format! Use DD/MM/YYYY");
+                    return;
+                }
+
                 String[] parts = input.split("/");
-                int day = Integer.parseInt(parts[0]);
+                int day   = Integer.parseInt(parts[0]);
                 int month = Integer.parseInt(parts[1]);
-                int year = Integer.parseInt(parts[2]);
+                int year  = Integer.parseInt(parts[2]);
 
                 if (year < MIN_YEAR || year > MAX_YEAR) {
                     textViewResult.setText("Year must be between " + MIN_YEAR + " and " + MAX_YEAR);
                     return;
                 }
-
                 if (!isValidDate(day, month, year)) {
                     textViewResult.setText("Invalid date entered!");
                     return;
                 }
 
                 int[] next = getNextDate(day, month, year);
-                textViewResult.setText("Next Date: " + next[0] + "/" + next[1] + "/" + next[2]);
+
+                // Use them AFTER they exist
+                String inputDow = dayOfWeek(day, month, year);
+                String nextDow  = dayOfWeek(next[0], next[1], next[2]);
+
+                // NEW: leap-year message for the OUTPUT year (next[2])
+                String leapMsg = isLeapYear(next[2]) ? ("\n" + next[2] + " was a leap year.") : "";
+
+                textViewResult.setText(
+                        "Next Date: " + String.format("%02d/%02d/%04d", next[0], next[1], next[2]) +
+                                " (" + nextDow + ")" + "\n" +
+                                String.format("%02d/%02d/%04d", day, month, year) + " was: (" + inputDow + ")" +
+                                leapMsg
+                );
 
             } catch (Exception e) {
                 textViewResult.setText("Invalid format! Use DD/MM/YYYY");
             }
         });
+
+
     }
 
     /* ---------- Spinners setup & sync ---------- */
+    private String dayOfWeek(int day, int month, int year) {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, year);
+        cal.set(Calendar.MONTH, month - 1); // Calendar is 0-based for month
+        cal.set(Calendar.DAY_OF_MONTH, day);
+        return new SimpleDateFormat("EEE", Locale.getDefault()).format(cal.getTime());
+    }
 
     private void setupSpinners() {
         // Month: 1..12
