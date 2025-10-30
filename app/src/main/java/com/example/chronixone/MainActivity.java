@@ -96,13 +96,13 @@ public class MainActivity extends AppCompatActivity {
                 String nextDow  = dayOfWeek(next[0], next[1], next[2]);
 
                 // NEW: leap-year message for the OUTPUT year (next[2])
-                String leapMsg = isLeapYear(next[2]) ? ("\n" + next[2] + " was a leap year.") : "";
+                String leapMsg = getYearType(next[2]);
 
                 textViewResult.setText(
                         "Next Date: " + String.format("%02d/%02d/%04d", next[0], next[1], next[2]) +
                                 " (" + nextDow + ")" + "\n" +
-                                String.format("%02d/%02d/%04d", day, month, year) + " was: (" + inputDow + ")" +
-                                leapMsg
+                                String.format("%02d/%02d/%04d", day, month, year) + " is a (" + inputDow + ")" +
+                                "\n" + leapMsg
                 );
 
             } catch (Exception e) {
@@ -260,8 +260,19 @@ public class MainActivity extends AppCompatActivity {
         if (year % 100 == 0) return false;
         return year % 4 == 0;
     }
+    private String getYearType(int year) {
+        boolean leap = isLeapYear(year);
+        boolean century = (year % 100 == 0);
 
-    /* Small helper to avoid verbose listeners */
+        if (leap && century)
+            return year + " is both a Leap Year and a Century Year.";
+        else if (leap)
+            return year + " is a Leap Year.";
+        else if (century)
+            return year + " is a Century Year but not a Leap Year.";
+        else
+            return year + " is neither a Leap Year nor a Century Year.";
+    }
     private static class SimpleItemSelectedListener implements android.widget.AdapterView.OnItemSelectedListener {
         private final Runnable onSelect;
         SimpleItemSelectedListener(Runnable onSelect) { this.onSelect = onSelect; }
