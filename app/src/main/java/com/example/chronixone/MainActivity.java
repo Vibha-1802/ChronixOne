@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
     Spinner spinnerDay, spinnerMonth, spinnerYear;
 
     private static final int MIN_YEAR = 1872;
-    private static final int MAX_YEAR = 2025;
+    private static final int MAX_YEAR = 2040;
 
     // flags to avoid feedback loops
     private boolean updatingFromSpinners = false;
