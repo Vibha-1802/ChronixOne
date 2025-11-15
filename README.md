@@ -43,7 +43,7 @@ Tests invalid user input (01/31/1872)
 
 App displays an error message:
 
-Invalid date entered!” 
+Invalid date entered!
 
 https://github.com/user-attachments/assets/f9743126-3518-4c03-ac59-3893ecb1d1ec
 
@@ -67,4 +67,65 @@ App displays:
 
 https://github.com/user-attachments/assets/87535a62-131d-47d1-a66e-540cbab6990d
 
+---
 
+## 🧩 Modules
+
+### 1. User Interface Module
+
+Handles user input and displays results.
+Includes EditText, Spinner-based input, Buttons, and dynamic TextViews.
+
+### 2. Validation Module
+
+Ensures input is in correct DD/MM/YYYY format and prevents invalid characters.
+
+### 3. Date Calculation Module
+
+Contains all date logic:
+getNextDate()
+isLeapYear()
+daysInMonth()
+dayOfWeek()
+getYearType()
+
+### 4. Output Module
+
+Displays valid results or error messages dynamically.
+
+---
+
+## 🧠 Algorithms Implemented
+
+### Leap Year Algorithm
+If year % 400 == 0 → leap year + century year
+Else if year % 100 == 0 → century year
+Else if year % 4 == 0 → leap year
+Else → not leap year
+
+### Next Date Algorithm
+day = day + 1
+If day > maxDaysOfMonth → day = 1, month++
+If month > 12 → month = 1, year++
+
+### Year Type Algorithm
+
+Determines if the year is:
+Leap Year
+Century Year
+Both
+Neither
+
+---
+
+## 🛠 Technologies Used
+
+| Component  | Technology                         |
+| ---------- | ---------------------------------- |
+| Language   | Java                               |
+| IDE        | Android Studio                     |
+| UI Design  | XML (ConstraintLayout)             |
+| Testing    | Android Emulator / Physical Device |
+| OS Support | Android 7.0+                       |
+
+---
