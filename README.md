@@ -74,6 +74,7 @@ https://github.com/user-attachments/assets/87535a62-131d-47d1-a66e-540cbab6990d
 ### 1. User Interface Module
 
 Handles user input and displays results.
+
 Includes EditText, Spinner-based input, Buttons, and dynamic TextViews.
 
 ### 2. Validation Module
@@ -83,10 +84,15 @@ Ensures input is in correct DD/MM/YYYY format and prevents invalid characters.
 ### 3. Date Calculation Module
 
 Contains all date logic:
+
 getNextDate()
+
 isLeapYear()
+
 daysInMonth()
+
 dayOfWeek()
+
 getYearType()
 
 ### 4. Output Module
@@ -98,22 +104,33 @@ Displays valid results or error messages dynamically.
 ## 🧠 Algorithms Implemented
 
 ### Leap Year Algorithm
+
 If year % 400 == 0 → leap year + century year
+
 Else if year % 100 == 0 → century year
+
 Else if year % 4 == 0 → leap year
+
 Else → not leap year
 
 ### Next Date Algorithm
+
 day = day + 1
+
 If day > maxDaysOfMonth → day = 1, month++
+
 If month > 12 → month = 1, year++
 
 ### Year Type Algorithm
 
 Determines if the year is:
+
 Leap Year
+
 Century Year
+
 Both
+
 Neither
 
 ---
@@ -129,3 +146,32 @@ Neither
 | OS Support | Android 7.0+                       |
 
 ---
+
+## 🚀 Getting Started
+
+Follow the steps below to set up and run the ChronixOne project on your machine.
+
+### 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/Vibha-1802/ChronixOne.git
+```
+
+### 2️⃣ Open the Project in Android Studio
+
+Launch Android Studio
+
+Go to File → Open
+
+Select the cloned project folder
+
+Wait for Gradle to sync all required dependencies
+
+### 3️⃣ Run the Application
+
+Connect any Android device via USB
+OR start an Android Emulator from AVD Manager
+
+Press the Run ▶ button in Android Studio
+
+The app will install and launch automatically
